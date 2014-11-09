@@ -11,8 +11,8 @@ and may not be redistributed without written permission.*/
 #include <stdlib.h>
 
 //Screen constants
-const int SCREEN_WIDTH = 640;
-const int SCREEN_HEIGHT = 400;
+const int SCREEN_WIDTH = 800;
+const int SCREEN_HEIGHT = 540;
 const int SCREEN_FPS = 60;
 
 bool initGL();

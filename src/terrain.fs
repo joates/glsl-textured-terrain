@@ -1,9 +1,9 @@
 // Created by inigo quilez - iq/2014
 // License Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported License.
 
-//#define USE_BOUND_PLANE
+#define USE_BOUND_PLANE
 //#define DRAW_RUBES
-//#define USE_COSINE
+#define USE_COSINE
 
 uniform sampler2D iChannel0;
 uniform sampler2D iChannel1;
@@ -12,6 +12,7 @@ uniform vec3  iResolution;
 uniform float iGlobalTime;
 
 varying vec3 iPosition;
+varying vec2 texCoord;
 
 const mat2 m2 = mat2(1.6,-1.2,1.2,1.6);
 
@@ -290,24 +291,23 @@ void main( void )
 
         // rock
         col = vec3(0.07,0.06,0.05);
-        col *= 0.2 + sqrt( texture2D( iChannel0, 0.01*pos.xy*vec2(0.5,1.0) ).x *
-                           texture2D( iChannel0, 0.01*pos.zy*vec2(0.5,1.0) ).x );
+        col *= 0.2 + sqrt( texture2D( iChannel0, 0.01*pos.xz*vec2(0.5,1.0) ).x *
+                           texture2D( iChannel0, 0.01*pos.xz*vec2(0.5,1.0) ).x );
         vec3 col2 = vec3(1.0,0.2,0.1)*0.01;
         col = mix( col, col2, 0.5*res.y );
         
         // grass
         float s = smoothstep(0.6,0.7,nor.y - 0.01*(pos.y-20.0));        
-        s *= smoothstep( 0.15,0.2,0.01*nor.x+texture2D(iChannel0, 0.001*pos.zx).x);
+        s *= smoothstep( 0.15,0.2,0.01*nor.x+texture2D(iChannel0, 0.001*pos.xz).x);
         vec3 gcol = 0.13*vec3(0.22,0.23,0.04);
         gcol *= 0.3+texture2D( iChannel1, 0.03*pos.xz ).x*1.4;
         col = mix( col, gcol, s );
-        //col *= texture2D( iChannel0, 0.3*pos.xz ).x*3.2;
         nor = mix( nor, sor, 0.3*s );
         vec3 ptnor = nor;
 
         // trees
         s = smoothstep(0.9,0.95,nor.y - 0.01*(pos.y-20.0));        
-        s *= smoothstep( 0.1,0.13,-0.17+texture2D(iChannel0, 0.001*pos.zx).x);
+        s *= smoothstep( 0.1,0.13,-0.17+texture2D(iChannel0, 0.0025*pos.xz).x);
         vec3 tor = -1.0 + 2.0*texture2D( iChannel1, 0.015*pos.xz ).xyz;
         tor.y = 1.5;
         tor = normalize(tor);
@@ -315,6 +315,7 @@ void main( void )
         nor = mix( nor, tor, 0.7*s );
         
 		// snow
+        
         s = ptnor.y + 0.008*pos.y - 0.2 + 0.2*(texture2D(iChannel1,0.00015*pos.xz+0.0*sor.y).x-0.5);
         float sf = fwidth(s) * 1.5;
         s = smoothstep(0.84-sf, 0.84+sf, s );
@@ -361,5 +362,8 @@ void main( void )
     // camera fade
     col *= smoothstep( 0.0, 0.1, 2.0*abs(fract(0.5+iGlobalTime/9.0)-0.5) );
    
+    // top black bar (FYI: quadHeight defines bottom black bar)
+    if (texCoord.y < 0.2) { col = vec3( 0.0 ); }
+
 	gl_FragColor = vec4( col, 1.0 );
 }

@@ -770,8 +770,8 @@ void LTexture::render( GLfloat x, GLfloat y, LFRect* clip )
         GLfloat texRight = (GLfloat)mImageWidth / (GLfloat)mTextureWidth;
 
         //Vertex coordinates            //dirty hack by joates (9-Nov-2014)
-        GLfloat quadWidth  = 640.0;     //mImageWidth;
-        GLfloat quadHeight = 400.0;     //mImageHeight;
+        GLfloat quadWidth  = 800.0;     //mImageWidth;
+        GLfloat quadHeight = 450.0;     //mImageHeight;
 
         //Handle clipping
         if( clip != NULL )

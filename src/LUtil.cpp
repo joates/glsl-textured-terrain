@@ -112,7 +112,7 @@ bool loadGP()
 bool loadMedia()
 {
 	//Load texture
-	if( !gOpenGLTexture.loadTextureFromFile32( "img/grass.png" ) )
+	if( !gOpenGLTexture.loadTextureFromFile32( "img/demo.png" ) )
 	{
 	    printf( "Unable to load texture!\n" );
 		return false;
@@ -166,9 +166,6 @@ void render()
     //Clear color buffer
     glClear( GL_COLOR_BUFFER_BIT );
 
-    //Rendering a texture loads it to GL_TEXTURE0 + texID
-    gOpenGLTexture.render( 0.f, 0.f );
-
     //Reset transformations
     glLoadIdentity();
 
@@ -181,6 +178,9 @@ void render()
         glVertex2f(  half_width,  half_height );
         glVertex2f( -half_width,  half_height );
     glEnd();
+
+    //Rendering a texture loads it to GL_TEXTURE0 + texID
+    gOpenGLTexture.render( 0.0, 0.0 );
 
     //Update screen
     glutSwapBuffers();

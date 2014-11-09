@@ -25,7 +25,7 @@ int main( int argc, char* args[] )
     //Create Double Buffered Window
     glutInitDisplayMode( GLUT_DOUBLE );
     glutInitWindowSize( SCREEN_WIDTH, SCREEN_HEIGHT );
-    glutCreateWindow( "GLSL Textured Terrain (iquilezles.org)" );
+    glutCreateWindow( "textured-terrain | iquilezles.org" );
 
     //Do post window/context creation initialization
     if( !initGL() )
