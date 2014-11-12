@@ -8,6 +8,7 @@ and may not be redistributed without written permission.*/
 #include "LShaderProgram.h"
 #include <glm/glm.hpp>
 #include "LColorRGBA.h"
+#include <math.h>
 
 class LTexturedPolygonProgram2D : public LShaderProgram
 {
@@ -176,6 +177,8 @@ class LTexturedPolygonProgram2D : public LShaderProgram
 
                 void setGlobalTime( GLfloat t );
 
+                void setCameraAngle( GLfloat x );
+
 	private:
 		//Attribute locations
 		GLint mVertexPos2DLocation;
@@ -197,6 +200,8 @@ class LTexturedPolygonProgram2D : public LShaderProgram
 
                 GLint mResolutionLocation;
                 GLint mGlobalTimeLocation;
+
+                GLfloat mCameraAngleLocation;
 };
 
 #endif

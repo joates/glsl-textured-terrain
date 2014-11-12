@@ -17,6 +17,8 @@ LTexturedPolygonProgram2D::LTexturedPolygonProgram2D()
 
 	mResolutionLocation = 0;
 	mGlobalTimeLocation = 0;
+
+	mCameraAngleLocation = 0;
 }
 
 bool LTexturedPolygonProgram2D::loadProgram()
@@ -94,12 +96,6 @@ bool LTexturedPolygonProgram2D::loadProgram()
 		printf( "%s is not a valid glsl program variable!\n", "LTextureColor" );
 	}
 
-	mTextureUnitLocation = glGetUniformLocation( mProgramID, "iChannel0" );
-	if( mTextureUnitLocation == -1 )
-	{
-		printf( "%s is not a valid glsl program variable!\n", "iChannel0" );
-	}
-
 	mProjectionMatrixLocation = glGetUniformLocation( mProgramID, "LProjectionMatrix" );
 	if( mProjectionMatrixLocation == -1 )
 	{
@@ -112,6 +108,12 @@ bool LTexturedPolygonProgram2D::loadProgram()
 		printf( "%s is not a valid glsl program variable!\n", "LModelViewMatrix" );
 	}
 
+	mTextureUnitLocation = glGetUniformLocation( mProgramID, "iChannel0" );
+	if( mTextureUnitLocation == -1 )
+	{
+		printf( "%s is not a valid glsl program variable!\n", "iChannel0" );
+	}
+
 	mResolutionLocation = glGetUniformLocation( mProgramID, "iResolution" );
 	if( mResolutionLocation == -1 )
 	{
@@ -122,6 +124,12 @@ bool LTexturedPolygonProgram2D::loadProgram()
 	if( mGlobalTimeLocation == -1 )
 	{
 		printf( "%s is not a valid glsl program variable!\n", "iGlobalTime" );
+	}
+
+	mCameraAngleLocation = glGetUniformLocation( mProgramID, "camAngle" );
+	if( mCameraAngleLocation == -1 )
+	{
+		printf( "%s is not a valid glsl program variable!\n", "camAngle" );
 	}
 
 	return true;
@@ -207,4 +215,10 @@ void LTexturedPolygonProgram2D::setGlobalTime( GLfloat t )
 {
     //Update elapsed time in shader
 	glUniform1f( mGlobalTimeLocation, t );
+}
+
+void LTexturedPolygonProgram2D::setCameraAngle( GLfloat x )
+{
+   //Update elapsed time in shader
+	glUniform1f( mCameraAngleLocation, x );
 }

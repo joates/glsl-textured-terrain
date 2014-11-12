@@ -21,6 +21,10 @@ LColorRGBA gTextureColor = { 1.f, 1.f, 1.f, 0.75f };
 timespec ts;
 double start_time, elapsed_time;
 
+float deltaMove = 0.f;
+float camAngle  = 0.f;
+const float camSpeed = M_PI/360.f;
+
 bool initGL()
 {
     // clock_gettime(CLOCK_MONOTONIC, &ts); // Works on FreeBSD
@@ -112,7 +116,7 @@ bool loadGP()
 bool loadMedia()
 {
 	//Load texture
-	if( !gOpenGLTexture.loadTextureFromFile32( "img/demo.png" ) )
+	if( !gOpenGLTexture.loadTextureFromFile32( "img/grass.png" ) )
 	{
 	    printf( "Unable to load texture!\n" );
 		return false;
@@ -132,6 +136,13 @@ void update()
     elapsed_time = ts.tv_sec - start_time + ((double)ldivresult.quot / 1000);
 
     gTexturedPolygonProgram2D.setGlobalTime( (float)elapsed_time );
+
+    if (deltaMove) {
+        camAngle += deltaMove;
+        if (camAngle < (-M_PI + camSpeed) ) camAngle += 2.0*M_PI;
+        if (camAngle > ( M_PI - camSpeed) ) camAngle -= 2.0*M_PI;
+        gTexturedPolygonProgram2D.setCameraAngle (camAngle);
+    }
 }
 
 void scan_keys( unsigned char key, int x, int y )
@@ -143,23 +154,24 @@ void scan_keys( unsigned char key, int x, int y )
     }
 }
 
+void pressKey( int key, int x, int y )
+{
+    switch (key) {
+        case GLUT_KEY_LEFT  : deltaMove = -camSpeed; break;
+        case GLUT_KEY_RIGHT : deltaMove =  camSpeed; break;
+    }
+}
+
+void releaseKey( int key, int x, int y )
+{
+    switch (key) {
+        case GLUT_KEY_LEFT  :
+        case GLUT_KEY_RIGHT : deltaMove = 0.0f; break;
+    }
+}
+
 void render()
 {
-    /*
-    //Clear color buffer
-    glClear( GL_COLOR_BUFFER_BIT );
-
-	//Reset transformations
-	gTexturedPolygonProgram2D.setModelView( glm::mat4() );
-
-	//Render texture centered
-	gTexturedPolygonProgram2D.setTextureColor( gTextureColor );
-	gOpenGLTexture.render( ( SCREEN_WIDTH - gOpenGLTexture.imageWidth() ) / 2.f, ( SCREEN_HEIGHT - gOpenGLTexture.imageHeight() ) / 2.f );
-
-    //Update screen
-    glutSwapBuffers();
-    */
-
     GLfloat half_width  = SCREEN_WIDTH  / 2.f;
     GLfloat half_height = SCREEN_HEIGHT / 2.f;
 
@@ -169,8 +181,8 @@ void render()
     //Reset transformations
     glLoadIdentity();
 
-    //Screen quad
-    glTranslatef( half_width, half_height, 0.f );
+    //Screen quad fills render surface
+    glTranslatef( half_width, half_height, 0.0 );
     glBegin( GL_QUADS );
         glColor3f( 1.f, 1.f, 1.f );
         glVertex2f( -half_width, -half_height );
@@ -179,7 +191,7 @@ void render()
         glVertex2f( -half_width,  half_height );
     glEnd();
 
-    //Rendering a texture loads it to GL_TEXTURE0 + texID
+    //Render the texture
     gOpenGLTexture.render( 0.0, 0.0 );
 
     //Update screen

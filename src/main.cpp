@@ -50,6 +50,9 @@ int main( int argc, char* args[] )
 
     //Check for keyboard input
     glutKeyboardFunc( scan_keys );
+    glutSpecialFunc( pressKey );
+    glutIgnoreKeyRepeat( 1 );
+    glutSpecialUpFunc( releaseKey );
 
     //Set rendering function
     glutDisplayFunc( render );
