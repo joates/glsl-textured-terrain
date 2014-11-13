@@ -8,7 +8,12 @@ uniform float camAngle;
 
 varying vec3  iPosition;
 
+#define PI 3.1415926535897932384626433832795
+
 const mat2 m2 = mat2(1.6,-1.2,1.2,1.6);
+const float halfPI = 0.5*PI;
+const float qtr_PI = 0.25*PI;
+const float vh = 12.0;        // vehicle height
 
 float terrain( vec2 p, int j ) {
     p *= 0.0013;
@@ -58,7 +63,12 @@ vec3 calcNormal( in vec3 pos, float t, int j ) {
 }
 
 vec3 camPath( float time ) {
-    vec2 p = 1100.0*vec2( cos(0.0+0.23*time), cos(1.5+0.205*time) );
+    //vec2 p = 1100.0*vec2( cos(0.0+0.23*time), cos(1.5+0.205*time) );
+    float r = 1000.0;
+    time *= 0.25;
+    vec2  p = vec2( r*cos(time), r*sin(time) );
+    //
+
     return vec3( p.x, 0.0, p.y );
 }
 
@@ -72,29 +82,49 @@ vec3 dome( in vec3 rd, in vec3 light1 ) {
     return bgcol*0.75;
 }
 
+vec3 skiView( in vec3 ro, in vec3 ta ) {
+    vec3 dv = ta-ro;
+    vec3 fl = vec3( dv.x*cos(qtr_PI)-dv.z*sin(qtr_PI), dv.y, dv.z*cos(qtr_PI)+dv.x*sin(qtr_PI) );
+    fl = 2.0 * normalize(fl);
+    vec3 fr = vec3( -fl.x, fl.y, fl.z );
+    fl.y = terrain( (ro+fl).xz, 4 );
+    fr.y = terrain( (ro+fr).xz, 4 );
+    float dot_fl = dot( vec3(0.0,1.0,0.0), fl );
+    float dot_fr = dot( vec3(0.0,1.0,0.0), fr );
+    if ( any( bvec2(dot_fl < 0.2, dot_fr < 0.2) ) ) {
+        fl.y = ro.y;
+        fr.y = ro.y;
+    }
+    return cross(ro+fr,ro+fl);
+}
+
 void main( void ) {
-    vec2 xy = -1.0 + 2.0*gl_FragCoord.xy/iResolution.xy;
-    vec2 sp = xy*vec2(iResolution.x/iResolution.y,0.75);
+    //vec2 xy = -1.0 + 2.0*gl_FragCoord.xy/iResolution.xy;
+    vec2 xy = gl_FragCoord.xy/iResolution.xy;
+    //
+
+    vec2 sp = xy*vec2(iResolution.x/iResolution.y,1.0);
+
     float time = 16.5 + (0.0+iGlobalTime-0.0)*0.1;
 
-    float cr = 0.18*sin(-0.1*time);
-    vec3  ro = camPath( time + 0.0 );
-    vec3  ta = camPath( time + 3.0 );
-    ro.y = terrain( ro.xz, 2 ) + 60.0 + 30.0*sin(1.0*(time-14.4));
-    ta.y = ro.y - 100.0;
+    vec3 ro = camPath( time + 0.0 );
+    vec3 ta = camPath( time + 4.0 );
+    ro.y = terrain( ro.xz, 4 ) + vh;
+    ta.y = terrain( ta.xz, 4 );
+
+    vec3 sv = skiView(ro,ta);
 
     // enable camera pivot
-    ta.x = cos(camAngle)*1100.0 + ro.x;
-    ta.z = sin(camAngle)*1100.0 + ro.z;
+    //ta.x = cos(camAngle)*1000.0 + ro.x;
+    //ta.z = sin(camAngle)*1000.0 + ro.z;
 
     vec3 light1 = normalize( vec3(-0.8,0.2,0.5) );
 
     // camera    
-    vec3  cw = normalize(ta-ro);
-    vec3  cp = normalize( vec3(0.0, 1.0, 0.0) );   //vec3(sin(cr), cos(cr), 0.0) );
-    vec3  cu = normalize( cross(cw,cp) );
-    vec3  cv = normalize( cross(cu,cw) );
-    vec3  rd = normalize( sp.x*cu + sp.y*cv + 1.5*cw );
+    vec3 cw = normalize(ta-ro);
+    vec3 cu = normalize( cross(cw,sv) );
+    vec3 cv = normalize( cross(cu,cw) );
+    vec3 rd = normalize( sp.x*cu + sp.y*cv + 1.5*cw );
     
     // background    
     vec3 bgcol = dome( rd, light1 );
