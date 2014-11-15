@@ -1,4 +1,4 @@
-// Created by inigo quilez - iq/2014
+// Original code by inigo quilez - iq/2014
 // License Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported License.
 
 uniform sampler2D iChannel0;
@@ -10,12 +10,14 @@ varying vec3  iPosition;
 
 #define PI 3.1415926535897932384626433832795
 
-const mat2 m2 = mat2(1.6,-1.2,1.2,1.6);
-const float halfPI = 0.5*PI;
+const float halfPI = 0.5 *PI;
 const float qtr_PI = 0.25*PI;
-const float vh = 12.0;        // vehicle height
+const mat2 m2 = mat2(1.6,-1.2,1.2,1.6);
 
 float terrain( vec2 p, int j ) {
+    p.x *= iResolution.x/iResolution.y;
+    //
+
     p *= 0.0013;
     float s = 1.0;
     float t = 0.0;
@@ -27,7 +29,7 @@ float terrain( vec2 p, int j ) {
     return t*55.0;
 }
 
-float map( in vec3 pos, float time ) {
+float map( in vec3 pos ) {
     return pos.y - terrain(pos.xz, 4);
 }
 
@@ -35,8 +37,8 @@ float intersect( in vec3 ro, in vec3 rd, in float tmin, in float tmax, in float 
     float t = tmin;
     for ( int i=0; i<160; i++ ) {
         vec3 pos = ro + t*rd;
-        float h = map( pos, time );
-        if( h<(0.001*t) || t>tmax  ) break;
+        float h = map( pos );
+        if ( h < (0.001*t) || t>tmax ) break;
         t += h * 0.5;
     }
     return t;
@@ -52,7 +54,7 @@ float calcShadow(in vec3 ro, in vec3 rd ) {
     float s1 = clamp( 1.0*(h1 + rd.y*d1 - terrain(ro.xz + d1*rd.xz, 4)), 0.0, 1.0 );
     float s2 = clamp( 0.5*(h1 + rd.y*d2 - terrain(ro.xz + d2*rd.xz, 4)), 0.0, 1.0 );
     float s3 = clamp( 0.2*(h2 + rd.y*d3 - terrain(ro.xz + d3*rd.xz, 2)), 0.0, 1.0 );
-    return min( min( s1, s2 ), s3 );
+    return min(min(s1,s2),s3);
 }
 
 vec3 calcNormal( in vec3 pos, float t, int j ) {
@@ -63,12 +65,7 @@ vec3 calcNormal( in vec3 pos, float t, int j ) {
 }
 
 vec3 camPath( float time ) {
-    //vec2 p = 1100.0*vec2( cos(0.0+0.23*time), cos(1.5+0.205*time) );
-    float r = 1000.0;
-    time *= 0.25;
-    vec2  p = vec2( r*cos(time), r*sin(time) );
-    //
-
+    vec2 p = 1200.0*vec2( cos(0.0+0.23*time), cos(1.5+0.205*time) );
     return vec3( p.x, 0.0, p.y );
 }
 
@@ -82,49 +79,58 @@ vec3 dome( in vec3 rd, in vec3 light1 ) {
     return bgcol*0.75;
 }
 
-vec3 skiView( in vec3 ro, in vec3 ta ) {
-    vec3 dv = ta-ro;
-    vec3 fl = vec3( dv.x*cos(qtr_PI)-dv.z*sin(qtr_PI), dv.y, dv.z*cos(qtr_PI)+dv.x*sin(qtr_PI) );
-    fl = 2.0 * normalize(fl);
-    vec3 fr = vec3( -fl.x, fl.y, fl.z );
-    fl.y = terrain( (ro+fl).xz, 4 );
-    fr.y = terrain( (ro+fr).xz, 4 );
-    float dot_fl = dot( vec3(0.0,1.0,0.0), fl );
-    float dot_fr = dot( vec3(0.0,1.0,0.0), fr );
-    if ( any( bvec2(dot_fl < 0.2, dot_fr < 0.2) ) ) {
-        fl.y = ro.y;
-        fr.y = ro.y;
-    }
-    return cross(ro+fr,ro+fl);
-}
-
 void main( void ) {
-    //vec2 xy = -1.0 + 2.0*gl_FragCoord.xy/iResolution.xy;
-    vec2 xy = gl_FragCoord.xy/iResolution.xy;
-    //
-
+    vec2 xy = -1.0+2.0*gl_FragCoord.xy/iResolution.xy;
     vec2 sp = xy*vec2(iResolution.x/iResolution.y,1.0);
 
+    // animate    
     float time = 16.5 + (0.0+iGlobalTime-0.0)*0.1;
 
-    vec3 ro = camPath( time + 0.0 );
-    vec3 ta = camPath( time + 4.0 );
-    ro.y = terrain( ro.xz, 4 ) + vh;
-    ta.y = terrain( ta.xz, 4 );
+    // ray origin
+    vec3  ro = camPath( time + 0.0 );
+    ro.y = terrain( ro.xz, 7 ) + 24.0;
 
-    vec3 sv = skiView(ro,ta);
+    // target
+    vec3  ta = camPath( time + 2.0 );
+    ta.y = ro.y - 180.0;
 
     // enable camera pivot
-    //ta.x = cos(camAngle)*1000.0 + ro.x;
-    //ta.z = sin(camAngle)*1000.0 + ro.z;
+    //ta.x = cos(camAngle)*200.0 + ro.x;
+    //ta.z = sin(camAngle)*200.0 + ro.z;
 
     vec3 light1 = normalize( vec3(-0.8,0.2,0.5) );
 
-    // camera    
-    vec3 cw = normalize(ta-ro);
-    vec3 cu = normalize( cross(cw,sv) );
-    vec3 cv = normalize( cross(cu,cw) );
-    vec3 rd = normalize( sp.x*cu + sp.y*cv + 1.5*cw );
+    // calc a distant tangent point
+    //vec3 tmp = vec3(0.0,0.0,0.0)-ro;
+    //vec3 tc = vec3(tmp.x*cos(halfPI)+tmp.z*sin(halfPI), tmp.y, tmp.z*cos(halfPI)-tmp.x*sin(halfPI));
+    //tc = ro+tc;
+
+    // calc control points
+    vec3 dv = ta-ro;
+    vec3 tmp = vec3(dv.x*cos(-halfPI)+dv.z*sin(-halfPI), dv.y, dv.z*cos(-halfPI)-dv.x*sin(-halfPI));
+    vec3 cpr = ro + normalize(dv)*4.0;
+    cpr.y = terrain( cpr.xz, 7 );
+    if ( cpr.y < ro.y ) {
+        // downward slope
+        cpr *= vec3(1.0, 0.25*(ro.y-cpr.y), 1.0);
+    } else {
+        // upward slope
+        cpr *= vec3(1.0, 0.25*(cpr.y-ro.y), 1.0);
+    }
+
+    //vec3 cpl = ro + vec3(dv.x*cos( qtr_PI)+dv.z*sin( qtr_PI), dv.y, dv.z*cos( qtr_PI)-dv.x*sin( qtr_PI));
+    //cpl.y = terrain( cpl.xz, 4 );
+    //
+
+    // camera
+    vec3  cw = normalize(ta-ro);                 // forward direction
+    vec3  cp = normalize( cross(cpr,cw) );       // roll  (rot on Z-axis)
+    vec3  cu = normalize( cross(cw,cp ) );       // pitch (rot on X-axis)
+
+    //vec3  cv = normalize( cross(cu,cw) );       // yaw   (rot on Y-axis)
+
+    // ray direction
+    vec3  rd = normalize( sp.x*cu + sp.y*cp + 1.5*cw );
     
     // background    
     vec3 bgcol = dome( rd, light1 );
